@@ -41,9 +41,26 @@ export class AppComponent {
 
   auth?: AuthConfig;
   playback?: PlaybackCredentialConfig;
+  /** Set only in BFF mode so AES enc.key goes through the Next key proxy. */
+  bffStreaming?: {
+    keyProxyMaxFailures: number;
+    keyProxyUrlBuilder: (ctx: {
+      videoId: string;
+      keyUrl: string;
+      token?: string;
+      expires?: string;
+      username?: string;
+      mobile?: string;
+    }) => string;
+  };
 
   get playerConfig() {
-    return toPlayerConfigPartial(this.config);
+    const base = toPlayerConfigPartial(this.config);
+    if (!this.bffStreaming) return base;
+    return {
+      ...base,
+      streaming: this.bffStreaming,
+    };
   }
 
   onPlay(): void {
@@ -56,6 +73,7 @@ export class AppComponent {
       }
       this.auth = undefined;
       this.playback = undefined;
+      this.bffStreaming = undefined;
       this.sourceUrl = url;
       this.videoId = this.videoIdDraft.trim() || "sample";
       this.sessionActive = true;
@@ -70,6 +88,24 @@ export class AppComponent {
     const origin = environment.bffOrigin.replace(/\/$/, "");
     this.sourceUrl = undefined;
     this.videoId = id;
+    this.bffStreaming = {
+      keyProxyMaxFailures: 2,
+      keyProxyUrlBuilder: ({
+        videoId,
+        keyUrl,
+        token,
+        expires,
+        username,
+        mobile,
+      }) => {
+        const params = new URLSearchParams({ url: keyUrl, videoId });
+        if (token) params.set("token", token);
+        if (expires) params.set("expires", expires);
+        if (username) params.set("username", username);
+        if (mobile) params.set("mobile", mobile);
+        return `${origin}/api/hls/key?${params.toString()}`;
+      },
+    };
     this.auth = {
       getToken: async (ctx) =>
         fetch(`${origin}/api/auth-token`, {
@@ -108,6 +144,7 @@ export class AppComponent {
   onStop(): void {
     this.playerCmp?.getPlayer()?.destroy();
     this.sessionActive = false;
+    this.bffStreaming = undefined;
     this.error = null;
   }
 
@@ -131,7 +168,7 @@ export class AppComponent {
 
   patch<K extends keyof PlaygroundConfig>(key: K, value: PlaygroundConfig[K]): void {
     this.config = { ...this.config, [key]: value };
-    this.playerCmp?.getPlayer()?.updateConfig(toPlayerConfigPartial(this.config));
+    this.playerCmp?.getPlayer()?.updateConfig(this.playerConfig);
   }
 
   onSkipChange(raw: number | string): void {

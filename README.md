@@ -6,7 +6,7 @@ Public playground for the **headless** Angular adapter. Mounts `<nsg-video-playe
 |--|--|
 | Port | **4200** |
 | Repo | [nsgplayer-sample-angular](https://github.com/codenannu/nsgplayer-sample-angular) |
-| SDK (pinned) | `@codenkay/video-nsgplayer-angular` / `core` **^3.0.4** |
+| SDK (pinned) | `@codenkay/video-nsgplayer-angular` / `core` **^5.0.0** |
 | Modes | Direct `sourceUrl` (default) · BFF video ID via Next sample **:3001** |
 
 > This sample is **standalone**. It does **not** require cloning the private SDK monorepo ([`nsgplayer-video`](https://github.com/codenannu/nsgplayer-video)). It installs packages from **npm** only. Full seek/quality chrome ships for React (`@codenkay/video-nsgplayer-ui`) — not in this package.
@@ -48,6 +48,8 @@ Open http://localhost:4200
 
 No secrets in this Angular app — tokens stay on the Next BFF.
 
+Encrypted AES streams in BFF mode set `streaming.keyProxyUrlBuilder` to the Next `/api/hls/key` route (forwards `token` / `expires` / `username` / `mobile`). Public `sourceUrl` mode omits the key proxy.
+
 ## Install peers (into your own app)
 
 ```bash
@@ -76,12 +78,13 @@ Use `getPlayer()` for play/pause/seek and core runtime APIs. Build your own Angu
 
 | Package | Tested |
 |---------|--------|
-| `@codenkay/video-nsgplayer-angular` | ^3.0.4 |
-| `@codenkay/video-nsgplayer-core` | ^3.0.4 |
+| `@codenkay/video-nsgplayer-angular` | ^5.0.0 |
+| `@codenkay/video-nsgplayer-core` | ^5.0.0 |
 
 ## Troubleshooting
 
 - **BFF CORS** — Next sample must allow `http://localhost:4200`.
+- **AES / enc.key in BFF mode** — requires the Next sample on **3001** (key proxy). Mock Next has no `enc.key`.
 - **No control bar** — expected; UI chrome is React-only. Use host buttons / `getPlayer()`.
 - **Do not `file:`-link** the private monorepo — use published npm.
 
