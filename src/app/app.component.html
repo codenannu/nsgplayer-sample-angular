@@ -1,0 +1,176 @@
+<div class="page">
+  <header class="header">
+    <div>
+      <h1>NSG Player — Angular sample</h1>
+      <p class="muted">
+        Headless <code>&#64;codenkay/video-nsgplayer-angular&#64;{{ sdkVersion }}</code> ·
+        port <strong>4200</strong>
+      </p>
+    </div>
+    <p class="banner">
+      Full control chrome ships for React (<code>&#64;codenkay/video-nsgplayer-ui</code>).
+      This sample uses <code>getPlayer()</code> for minimal host controls.
+      BFF mode expects <strong>nsgplayer-nextjs</strong> on
+      <code>http://localhost:3001</code>.
+    </p>
+  </header>
+
+  <section class="controls" aria-label="Playback source">
+    <label>
+      Mode
+      <select [(ngModel)]="mode" [ngModelOptions]="{ standalone: true }">
+        <option value="sourceUrl">Direct sourceUrl (no BFF)</option>
+        <option value="bff">BFF video ID (port 3001)</option>
+      </select>
+    </label>
+
+    @if (mode === "sourceUrl") {
+      <label>
+        HLS source URL
+        <input [(ngModel)]="sourceUrlDraft" [ngModelOptions]="{ standalone: true }" spellcheck="false" />
+      </label>
+    }
+
+    <label>
+      Video ID
+      <input [(ngModel)]="videoIdDraft" [ngModelOptions]="{ standalone: true }" />
+    </label>
+
+    <div class="actions">
+      <button type="button" class="primary" (click)="onPlay()">Play</button>
+      <button type="button" (click)="onStop()" [disabled]="!sessionActive">Stop</button>
+    </div>
+  </section>
+
+  <div class="layout">
+    <main class="player-pane">
+      @if (!sessionActive) {
+        <div class="placeholder" role="status">
+          Choose a mode, then click <strong>Play</strong>.
+        </div>
+      } @else {
+        <div class="player-shell">
+          <nsg-video-player
+            [videoId]="videoId"
+            [sourceUrl]="sourceUrl"
+            [auth]="auth"
+            [playback]="playback"
+            [config]="playerConfig"
+            (error)="onPlayerError($event)"
+            (autherror)="onPlayerError($event)"
+          />
+        </div>
+        <div class="host-chrome" aria-label="Host playback controls">
+          <button type="button" (click)="hostPlay()">Play</button>
+          <button type="button" (click)="hostPause()">Pause</button>
+          <button type="button" (click)="hostSeek(-10)">-10s</button>
+          <button type="button" (click)="hostSeek(10)">+10s</button>
+        </div>
+      }
+      @if (error) {
+        <p class="error" role="alert">{{ error }}</p>
+      }
+    </main>
+
+    <aside class="settings-pane">
+      <form class="settings" aria-label="Runtime player settings" (submit)="$event.preventDefault()">
+        <h2>Runtime settings</h2>
+        <p class="muted small">Applied via <code>getPlayer().updateConfig</code>.</p>
+
+        <fieldset>
+          <legend>Playback</legend>
+          <label class="field check">
+            <input
+              type="checkbox"
+              [ngModel]="config.autoplay"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="patch('autoplay', $event)"
+            />
+            Autoplay
+          </label>
+          <label class="field check">
+            <input
+              type="checkbox"
+              [ngModel]="config.startMuted"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="patch('startMuted', $event)"
+            />
+            Start muted
+          </label>
+          <label class="field">
+            Skip seconds
+            <select
+              [ngModel]="config.skipSeconds"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onSkipChange($event)"
+            >
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="15">15</option>
+              <option [ngValue]="30">30</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Watermark</legend>
+          <label class="field check">
+            <input
+              type="checkbox"
+              [ngModel]="config.watermarkEnabled"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="patch('watermarkEnabled', $event)"
+            />
+            Enabled
+          </label>
+          <label class="field">
+            Text
+            <input
+              [ngModel]="config.watermarkText"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="patch('watermarkText', $event)"
+            />
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Theme</legend>
+          <label class="field">
+            Seek progress
+            <input
+              type="color"
+              [ngModel]="config.seekProgressColor"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="patch('seekProgressColor', $event)"
+            />
+          </label>
+          <label class="field">
+            Play icon preset
+            <select
+              [ngModel]="config.playIconPreset"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onPresetChange($event)"
+            >
+              <option value="triangle">triangle</option>
+              <option value="circle">circle</option>
+              <option value="roundedSquare">roundedSquare</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Accessibility</legend>
+          <label class="field check">
+            <input
+              type="checkbox"
+              [ngModel]="config.reducedMotion"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="patch('reducedMotion', $event)"
+            />
+            Reduced motion
+          </label>
+        </fieldset>
+      </form>
+    </aside>
+  </div>
+</div>

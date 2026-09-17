@@ -1,0 +1,36 @@
+{
+  "name": "nsgplayer-angular",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NSG Player sample — Angular standalone (headless + runtime settings)",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve --port 4200 --host 0.0.0.0",
+    "dev": "npm start",
+    "build": "ng build",
+    "typecheck": "ng build --configuration development"
+  },
+  "dependencies": {
+    "@angular/common": "^19.2.0",
+    "@angular/compiler": "^19.2.0",
+    "@angular/core": "^19.2.0",
+    "@angular/forms": "^19.2.0",
+    "@angular/platform-browser": "^19.2.0",
+    "@angular/platform-browser-dynamic": "^19.2.0",
+    "@codenkay/video-nsgplayer-angular": "^3.0.4",
+    "@codenkay/video-nsgplayer-core": "^3.0.4",
+    "hls.js": "^1.6.18",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^19.2.27",
+    "@angular/cli": "^19.2.27",
+    "@angular/compiler-cli": "^19.2.0",
+    "typescript": "~5.7.2"
+  }
+}
