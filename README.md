@@ -24,7 +24,7 @@ Public playground for the **headless** Angular adapter. Mounts `<nsg-video-playe
 
 | Sample | Repository | Port | Purpose |
 |--------|------------|------|---------|
-| React (no BFF) | [nsgplayer-sample-react](https://github.com/codenannu/nsgplayer-sample-react) | **5173** | Full React chrome, public HLS |
+| React | [nsgplayer-sample-react](https://github.com/codenannu/nsgplayer-sample-react) | **5173** | Full React chrome · **same BFF client** |
 | Next.js + BFF | [nsgplayer-sample-nextjs](https://github.com/codenannu/nsgplayer-sample-nextjs) | **3001** | BFF for signed / auth playback |
 | **This repo** | [nsgplayer-sample-angular](https://github.com/codenannu/nsgplayer-sample-angular) | **4200** | Angular headless playground |
 
@@ -41,14 +41,16 @@ Open http://localhost:4200
 
 ## BFF mode (optional)
 
+Uses the shared thin client `src/shared/bffClient.ts` (identical to the React sample):
+
 1. Run [nsgplayer-sample-nextjs](https://github.com/codenannu/nsgplayer-sample-nextjs) on port **3001**.
 2. Switch Mode to **BFF video ID** and click Play.
 
-`environment.bffOrigin` defaults to `http://localhost:3001`.
-
-No secrets in this Angular app — tokens stay on the Next BFF.
+`environment.bffOrigin` defaults to `http://localhost:3001` (see `src/environments/`). For production, set your deployed BFF origin and allow this SPA in the BFF `CORS_ORIGINS`.
 
 Encrypted AES streams in BFF mode set `streaming.keyProxyUrlBuilder` to the Next `/api/hls/key` route (forwards `token` / `expires` / `username` / `mobile`). Public `sourceUrl` mode omits the key proxy.
+
+No secrets in this Angular app — tokens stay on the Next BFF.
 
 ## Install peers (into your own app)
 
@@ -70,9 +72,15 @@ npm install @codenkay/video-nsgplayer-angular @codenkay/video-nsgplayer-core hls
 
 Use `getPlayer()` for play/pause/seek and core runtime APIs. Build your own Angular chrome if needed.
 
+### Lift BFF wiring into an existing app
+
+1. Copy `src/shared/bffClient.ts` (or point the three callbacks at **your** BFF).
+2. Copy the four route patterns from the Next sample onto **your** backend.
+3. Do **not** `file:`-link the private monorepo — use published npm.
+
 ## Shared contract
 
-`src/shared/` is vendored identically in the React and Next samples. Keep them in sync when editing playground fields.
+`src/shared/` is vendored identically in the React and Next samples (including `bffClient.ts`). Keep them in sync when editing playground fields.
 
 ## Version matrix
 

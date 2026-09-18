@@ -6,8 +6,10 @@ import {
 import type {
   AuthConfig,
   PlaybackCredentialConfig,
+  StreamingConfig,
 } from "@codenkay/video-nsgplayer-core";
 import { environment } from "../environments/environment";
+import { createBffAdapters } from "../shared/bffClient";
 import {
   DEFAULT_PLAYGROUND_CONFIG,
   toPlayerConfigPartial,
@@ -30,6 +32,7 @@ export class AppComponent {
   playerCmp?: NsgVideoPlayerComponent;
 
   readonly sdkVersion = SDK_VERSION_MATRIX.angular;
+  readonly bffOrigin = environment.bffOrigin;
   mode: Mode = "sourceUrl";
   sourceUrlDraft = SAMPLE_HLS_URL;
   videoIdDraft = "demo-video";
@@ -42,17 +45,7 @@ export class AppComponent {
   auth?: AuthConfig;
   playback?: PlaybackCredentialConfig;
   /** Set only in BFF mode so AES enc.key goes through the Next key proxy. */
-  bffStreaming?: {
-    keyProxyMaxFailures: number;
-    keyProxyUrlBuilder: (ctx: {
-      videoId: string;
-      keyUrl: string;
-      token?: string;
-      expires?: string;
-      username?: string;
-      mobile?: string;
-    }) => string;
-  };
+  bffStreaming?: StreamingConfig;
 
   get playerConfig() {
     const base = toPlayerConfigPartial(this.config);
@@ -85,65 +78,20 @@ export class AppComponent {
       this.error = "Enter a video ID.";
       return;
     }
-    const origin = environment.bffOrigin.replace(/\/$/, "");
+    const adapters = createBffAdapters(environment.bffOrigin);
     this.sourceUrl = undefined;
     this.videoId = id;
-    this.bffStreaming = {
-      keyProxyMaxFailures: 2,
-      keyProxyUrlBuilder: ({
-        videoId,
-        keyUrl,
-        token,
-        expires,
-        username,
-        mobile,
-      }) => {
-        const params = new URLSearchParams({ url: keyUrl, videoId });
-        if (token) params.set("token", token);
-        if (expires) params.set("expires", expires);
-        if (username) params.set("username", username);
-        if (mobile) params.set("mobile", mobile);
-        return `${origin}/api/hls/key?${params.toString()}`;
-      },
-    };
-    this.auth = {
-      getToken: async (ctx) =>
-        fetch(`${origin}/api/auth-token`, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(ctx),
-        }).then(async (r) => {
-          if (!r.ok) throw new Error(await r.text());
-          return r.json();
-        }),
-    };
-    this.playback = {
-      getSource: async ({ videoId }) =>
-        fetch(`${origin}/api/videos/${encodeURIComponent(videoId)}/signed-url`).then(
-          async (r) => {
-            if (!r.ok) throw new Error(await r.text());
-            return r.json();
-          },
-        ),
-      refreshSource: async ({ videoId }) =>
-        fetch(
-          `${origin}/api/videos/${encodeURIComponent(videoId)}/proxy-refresh`,
-          {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: "{}",
-          },
-        ).then(async (r) => {
-          if (!r.ok) throw new Error(await r.text());
-          return r.json();
-        }),
-    };
+    this.auth = adapters.auth;
+    this.playback = adapters.playback;
+    this.bffStreaming = adapters.streaming;
     this.sessionActive = true;
   }
 
   onStop(): void {
     this.playerCmp?.getPlayer()?.destroy();
     this.sessionActive = false;
+    this.auth = undefined;
+    this.playback = undefined;
     this.bffStreaming = undefined;
     this.error = null;
   }
